@@ -4,17 +4,18 @@ using System;
 public class MyBot : IChessBot
 {
     // Piece values: null, pawn, knight, bishop, rook, queen, king
-    int[] pieceValues = { 0, 100, 300, 300, 500, 900, 10000 };
-    static Random rng = new();
+    readonly int[] pieceValues = { 0, 100, 300, 300, 500, 900, 10000 };
+    static readonly Random rng = new();
 
     public Move Think(Board board, Timer timer)
     {
-        return ThinkAtDepth(board, timer, 3).Move;
+        return ThinkAtDepth(board, timer, 2).Move;
     }
 
     private MoveEvaluation ThinkAtDepth(Board board, Timer timer, int depth)
     {
-        Move[] allMoves = board.GetLegalMoves();
+        Span<Move> allMoves = stackalloc Move[256];
+        board.GetLegalMovesNonAlloc(ref allMoves);
 
         // Pick a random move to play if nothing better is found
         Move moveToPlay = allMoves[rng.Next(allMoves.Length)];
@@ -60,7 +61,7 @@ public class MyBot : IChessBot
     }
 
     // Test if this move gives checkmate
-    bool MoveIsCheckmate(Board board, Move move)
+    static bool MoveIsCheckmate(Board board, Move move)
     {
         board.MakeMove(move);
         bool isMate = board.IsInCheckmate();
@@ -68,7 +69,7 @@ public class MyBot : IChessBot
         return isMate;
     }
 
-    bool MoveIsDraw(Board board, Move move)
+    static bool MoveIsDraw(Board board, Move move)
     {
         board.MakeMove(move);
         bool isDraw = board.IsDraw();
